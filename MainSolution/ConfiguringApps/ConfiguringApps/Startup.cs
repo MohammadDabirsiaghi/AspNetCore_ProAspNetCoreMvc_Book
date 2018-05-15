@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ConfiguringApps
 {
@@ -21,20 +22,34 @@ namespace ConfiguringApps
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env,ILoggerFactory loggerFactory)
         {
+            loggerFactory.AddConsole(LogLevel.Debug);
+            loggerFactory.AddDebug(LogLevel.Debug);
+
+
+            if (env.IsDevelopment())//env.IsDevelopment()-- env.IsProduction()-- env.IsStaging()
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseStatusCodePages();
+                app.UseBrowserLink();
+
+            }
+            else
+                app.UseExceptionHandler("/Home/Error");
+
+            app.UseMiddleware<ErrorMiddleware>();
+            app.UseMiddleware<BrowserTypeMiddleware>();
+            app.UseMiddleware<ShortCircuitBrowserTypeMiddleware>();
             app.UseMiddleware<ShortCircuitMiddleware>();
             app.UseMiddleware<ContentMiddleware>();
             app.UseMvcWithDefaultRoute();
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
+           
+  
+            //app.Run(async (context) =>
+            //{
+            //    await context.Response.WriteAsync("Hello World!");
+            //});
         }
     }
 }
